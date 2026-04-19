@@ -9,7 +9,7 @@ from nltk.corpus import stopwords
 NLTK_stop_words_list = stopwords.words('english')
 
 # load dataset
-df = pd.read_csv('datasets/pytorch.csv')
+df = pd.read_csv('ise_coursework/datasets/pytorch.csv')
 
 # print(df[['Title', 'Body', 'class']].head())
 # print(df['class'].value_counts())
@@ -31,7 +31,7 @@ precisions, recalls, f1_scores, accuracies = [], [], [], []
 REPEAT = 10
 for i in range(REPEAT):
     # split dataset into train and test
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=i)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=i)
 
     # vectorize using TF-IDF, set up NB classifier
     vectorizer = TfidfVectorizer()
