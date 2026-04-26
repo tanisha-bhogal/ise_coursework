@@ -15,7 +15,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score, roc_auc_score
 
-df = pd.read_csv('datasets/pytorch.csv')
+project = 'caffe'
+path = f'datasets/{project}.csv'
+
+df = pd.read_csv(path)
 cols_to_clean = ['Title', 'Body', 'Comments', 'Codes', 'Commands']
 for col in cols_to_clean:
     df[col] = df[col].fillna('')
@@ -25,7 +28,8 @@ df['comment_count'] = df['Comments'].apply(lambda x: 0 if str(x).strip() == '[]'
 df['body_length'] = df['Body'].apply(lambda x: len(str(x).split()))
 
 print("Data loaded successfully. Total rows:", len(df))
-# cleaning methods
+
+# cleaning methods - same as baseline code
 def remove_html(text):
     """Remove HTML tags using a regex."""
     html = re.compile(r'<.*?>')
@@ -53,10 +57,6 @@ def remove_stopwords(text):
     return " ".join([word for word in str(text).split() if word not in final_stop_words_list])
 
 def clean_str(string):
-    """
-    Clean text by removing non-alphanumeric characters,
-    and convert it to lowercase.
-    """
     string = re.sub(r"[^A-Za-z0-9(),.!?\'\`]", " ", string)
     string = re.sub(r"\'s", " \'s", string)
     string = re.sub(r"\'ve", " \'ve", string)
@@ -78,18 +78,17 @@ X = df[['Title', 'Body', 'comments_cleaned', 'codes_cleaned', 'code_length', 'co
 y = df['class']
 
 
-# 1. Semantic Pipeline (Title/Body)
+# 1. Semantic Pipeline - used for the Title and Body - uses TF-IDF for keywords, and LSA to compensate for the limited vocabulary captured by TF-IDF
 semantic_pipeline = Pipeline([
     ('tfidf', TfidfVectorizer(max_features=500, stop_words='english')),
     ('lsa', TruncatedSVD(n_components=20, random_state=42))
 ])
 
-# 2. Lexical Pipeline (Codes/Comments)
+# 2. Lexical Pipeline - used for Title and Body - just TF-IDF to capture specific words
 lexical_pipeline = Pipeline([
     ('tfidf', TfidfVectorizer(max_features=1000, stop_words='english'))
 ])
 
-# NEW: 3. Numeric Pipeline (Scales the giant lengths down so the model doesn't crash)
 num_pipeline = Pipeline([
     ('scaler', StandardScaler())
 ])
@@ -101,7 +100,6 @@ preprocessor = ColumnTransformer(
         ('body_semantic', semantic_pipeline, 'Body'),
         ('comments_lexical', lexical_pipeline, 'comments_cleaned'),
         ('codes_lexical', lexical_pipeline, 'codes_cleaned'),
-        # Notice we use num_pipeline here now!
         ('structural_nums', num_pipeline, ['code_length', 'comment_count', 'body_length'])
     ])
 
@@ -138,7 +136,9 @@ for i in range(repeats):
     accuracies.append(accuracy_score(y_test, y_pred))
     aucs.append(roc_auc_score(y_test, y_prob))
 
-    print(f"Completed {i + 1}/{repeats} iterations")
+print(f"F1 Scores: {f1_scores}")
+print(f"AUC Scores: {aucs}")
+print(f"Accuracies: {accuracies}")
 
 print(f"\nFINAL LOGISTIC REGRESSION RESULTS: (Averaged over {repeats} runs)")
 print(f"Average Accuracy:  {sum(accuracies) / len(accuracies):.4f}")
