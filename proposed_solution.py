@@ -1,5 +1,4 @@
 import time
-
 import pandas as pd
 import re
 from sklearn.model_selection import train_test_split
@@ -66,13 +65,13 @@ X = df[['Title', 'Body', 'comments_cleaned', 'codes_cleaned', 'code_length', 'co
 y = df['class']
 
 
-# 1. Semantic Pipeline - used for the Title and Body - uses TF-IDF for keywords, and LSA to compensate for the limited vocabulary captured by TF-IDF
+# semantic pipeline
 semantic_pipeline = Pipeline([
     ('tfidf', TfidfVectorizer(max_features=500, stop_words='english')),
     ('lsa', TruncatedSVD(n_components=20, random_state=42))
 ])
 
-# 2. Lexical Pipeline - used for Title and Body - just TF-IDF to capture specific words
+# lexical pipeline
 lexical_pipeline = Pipeline([
     ('tfidf', TfidfVectorizer(max_features=1000, stop_words='english'))
 ])
@@ -81,7 +80,7 @@ num_pipeline = Pipeline([
     ('scaler', StandardScaler())
 ])
 
-# 4. The TRUE Multifaceted Preprocessor
+# multifaceted preprocessor
 preprocessor = ColumnTransformer(
     transformers=[
         ('title_semantic', semantic_pipeline, 'Title'),
@@ -91,21 +90,20 @@ preprocessor = ColumnTransformer(
         ('structural_nums', num_pipeline, ['code_length', 'comment_count', 'body_length'])
     ])
 
-# 5. The Classifier
+# classifier
 model = Pipeline([
     ('preprocessor', preprocessor),
     ('classifier', LogisticRegression(class_weight='balanced', max_iter=1000, random_state=42))
 ])
 
-# Metrics storage
+# metrics storage
 f1_scores, precisions, recalls, accuracies, aucs, train_times = [], [], [], [], [], []
 
 print("Starting pipeline...")
-# MATCH THE BASELINE ITERATIONS
+
 repeats = 10
 
 for i in range(repeats):
-    # stratify=y ensures we always get exactly 12.6% performance bugs in our test set
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=i)
 
     start_time = time.time()
@@ -113,11 +111,9 @@ for i in range(repeats):
     train_time = time.time() - start_time
     train_times.append(train_time)
 
-    # predict() gives 0 or 1. predict_proba() gives percentages (needed for AUC)
     y_pred = model.predict(X_test)
     y_prob = model.predict_proba(X_test)[:, 1]
 
-    # Calculate metrics
     f1_scores.append(f1_score(y_test, y_pred, zero_division=0))
     precisions.append(precision_score(y_test, y_pred, zero_division=0))
     recalls.append(recall_score(y_test, y_pred, zero_division=0))
