@@ -1,4 +1,7 @@
-# Tanisha Bhogal - Intelligent Software Engineering Coursework
+# Tanisha Bhogal - Tool Building Project
+Includes:
+- requirements.pdf
+- manual.pdf
+- replication.pdf
 
-Chosen Task: Tool Building Project\
-All relevant code can be found in this repository
+
